@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:stable-alpine3.17-slim
+    volumes:
+      - ./laravel:/var/www:z
+      - ./nginx/conf.d:/etc/nginx/conf.d:z
+      - ./nginx/ssl:/etc/nginx/ssl:z
+    ports:
+      - "$PROJECT_PORT:80"
+    tty:  true
+    restart: unless-stopped
+    container_name: $NGINX_NAME
+    depends_on:
+      - laravel
+
+  laravel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty:  true
+    user: 1000:1000
+    restart: unless-stopped
+    volumes:
+      - ./laravel:/var/www
+    container_name: $LARAVEL_NAME
+
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.ws
+    ports:
+      - $WEBSOCKET_PORT:6001
+    restart: unless-stopped
+    volumes:
+      - ./laravel:/var/www:z
+    depends_on:
+      - laravel
+    container_name: $WS_NAME
